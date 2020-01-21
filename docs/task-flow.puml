@@ -1,0 +1,37 @@
+@startuml
+actor User
+boundary CLI
+control TimeTrigger
+participant Renderer
+participant TaskStartHandler
+participant TaskStateChangeHandler
+participant TaskFinishHandler
+participant NotificationPlayer
+database sqlite
+
+== Initialization ==
+User -> CLI: execute: pomogo --task "programuj pomodoro"
+CLI -> TaskStartHandler: register new task
+TaskStartHandler -> sqlite: saves new task "programuj pomodoro"\nwith start date and other stuff
+
+== Repetition every X milliseconds ==
+TimeTrigger -> Renderer: triggers refresh
+Renderer -> sqlite: get tasks
+sqlite -> Renderer
+Renderer -> User: renders beautiful progress bar with animations and unicorns
+
+TimeTrigger -> TaskStateChangeHandler: triggers refresh
+
+alt work mode finishes and resting mode starts
+    TaskStateChangeHandler -> sqlite: saves new state - resting. And increment rest marker
+else work mode finishes and long resting mode starts
+    TaskStateChangeHandler -> sqlite: saves new state - deep resting. Zeroes rest marker
+else rest mode finishes and work mode starts
+    TaskStateChangeHandler -> sqlite: saves new state - resting. And increment rest marker
+else deep rest mode finishes
+    TaskStateChangeHandler -> sqlite: mark task as paused
+    TimeTrigger -> Renderer: [eventually] triggers
+    Renderer -> User: renders finish message with unicorns
+end
+
+@enduml
