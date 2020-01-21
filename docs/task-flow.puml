@@ -24,12 +24,16 @@ TimeTrigger -> TaskStateChangeHandler: triggers refresh
 
 alt work mode finishes and resting mode starts
     TaskStateChangeHandler -> sqlite: saves new state - resting. And increment rest marker
+    TaskStateChangeHandler -> NotificationPlayer: trigger sound notification
 else work mode finishes and long resting mode starts
     TaskStateChangeHandler -> sqlite: saves new state - deep resting. Zeroes rest marker
+    TaskStateChangeHandler -> NotificationPlayer: trigger sound notification
 else rest mode finishes and work mode starts
     TaskStateChangeHandler -> sqlite: saves new state - resting. And increment rest marker
+    TaskStateChangeHandler -> NotificationPlayer: trigger sound notification
 else deep rest mode finishes
     TaskStateChangeHandler -> sqlite: mark task as paused
+    TaskStateChangeHandler -> NotificationPlayer: trigger sound notification
     TimeTrigger -> Renderer: [eventually] triggers
     Renderer -> User: renders finish message with unicorns
 end
