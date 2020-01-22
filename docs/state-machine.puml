@@ -1,0 +1,13 @@
+@startuml
+(*) -down-> "Init state"
+-down-> Working state
+
+if "how many \nwork markers" then
+  -right->[< 4] "Short rest state"
+  -up-> Working state
+else
+  -down->[>= 4] "Long rest state"
+  -down->[Ending process] (*)
+endif
+
+@enduml
