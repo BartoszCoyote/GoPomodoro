@@ -1,4 +1,4 @@
-module github.com/michal-franc/GoPomodoro
+module github.com/BartoszCoyote/GoPomodoro
 
 go 1.13
 
