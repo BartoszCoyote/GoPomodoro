@@ -1,12 +1,10 @@
 package commands
+
 import (
 	"fmt"
-	"github.com/faiface/beep"
-	"github.com/faiface/beep/mp3"
-	"github.com/faiface/beep/speaker"
-	"github.com/spf13/cobra"
+	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/sound"
 	"github.com/cheggaaa/pb/v3"
-	"os"
+	"github.com/spf13/cobra"
 	"time"
 )
 
@@ -25,31 +23,17 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start task",
 	Run: func(cmd *cobra.Command, args []string) {
-
 		taskName := args[0]
 
 		fmt.Print("started task :", taskName)
 
-		timer, err := os.Open("./timer.mp3")
-		if err != nil {
-			fmt.Print("Fatal error reading sound file ")
-		}
-
-		streamer, format, err := mp3.Decode(timer)
-		speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
-
-		if err != nil {
-			fmt.Print("unable to decode mp3 file")
-		}
-		defer streamer.Close()
-
-		done := make(chan bool)
-		speaker.Play(beep.Seq(streamer, beep.Callback(func(){
-			done <- true
-		})))
+		player := sound.NewPlayer("./timer_short.ogg")
+		go player.Play()
+		defer player.Stop()
 
 		// 25 minutes
-		seconds := 25 * 60
+		seconds := 10
+		//seconds := 25 * 60
 
 		tmpl := `{{ "Working on task:" }} {{ string . "task" | green }} {{ bar . "<" "-" (cycle . "↖" "↗" "↘" "↙" ) "." ">"}} {{string . "timer" | green}}`
 		// start bar based on our template
@@ -60,10 +44,10 @@ var startCmd = &cobra.Command{
 
 		for i := 0; i < seconds; i++ {
 			bar.Increment()
-			time.Sleep(1*time.Second)
+			time.Sleep(1 * time.Second)
 			bar.Set("timer", fmtTimer(i))
+
 		}
-		<-done
 
 		bar.Finish()
 	},
