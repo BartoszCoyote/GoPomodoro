@@ -26,7 +26,7 @@ func (p *Player) Init(soundFile string) *Player {
 	return p
 }
 
-func (p *Player) Play() {
+func (p *Player) PlayLoop() {
 	for {
 		sound := p.sound.Streamer(0, p.sound.Len())
 		speaker.Play(beep.Seq(sound, beep.Callback(func() {
@@ -39,6 +39,15 @@ func (p *Player) Play() {
 			break
 		}
 	}
+}
+
+func (p *Player) Play() {
+	done := make(chan bool)
+	sound := p.sound.Streamer(0, p.sound.Len())
+	speaker.Play(beep.Seq(sound, beep.Callback(func() {
+		done <- true
+	})))
+	<-done
 }
 
 func (p *Player) Stop() {
