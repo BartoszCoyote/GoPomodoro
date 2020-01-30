@@ -2,10 +2,8 @@ package commands
 
 import (
 	"fmt"
-	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/sound"
-	"github.com/cheggaaa/pb/v3"
+	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/task"
 	"github.com/spf13/cobra"
-	"time"
 )
 
 func init() {
@@ -27,28 +25,7 @@ var startCmd = &cobra.Command{
 
 		fmt.Print("started task :", taskName)
 
-		player := sound.NewPlayer("./timer_short.ogg")
-		go player.Play()
-		defer player.Stop()
-
-		// 25 minutes
-		seconds := 10
-		//seconds := 25 * 60
-
-		tmpl := `{{ "Working on task:" }} {{ string . "task" | green }} {{ bar . "<" "-" (cycle . "↖" "↗" "↘" "↙" ) "." ">"}} {{string . "timer" | green}}`
-		// start bar based on our template
-		bar := pb.ProgressBarTemplate(tmpl).Start(seconds)
-		// set values for string elements
-		bar.Set("task", taskName).
-			Set("timer", fmtTimer(0))
-
-		for i := 0; i < seconds; i++ {
-			bar.Increment()
-			time.Sleep(1 * time.Second)
-			bar.Set("timer", fmtTimer(i))
-
-		}
-
-		bar.Finish()
+		subtask := task.NewSubtask(taskName, 3, "./timer_short.ogg", "./timer_short.ogg")
+		subtask.Work()
 	},
 }
