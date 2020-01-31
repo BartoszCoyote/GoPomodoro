@@ -10,13 +10,6 @@ func init() {
 	rootCmd.AddCommand(startCmd)
 }
 
-func fmtTimer(t int) string {
-	m := t / 60
-	s := t - (m * 60)
-	return fmt.Sprintf("%02d:%02d", m, s)
-}
-
-// Beep documentation - https://github.com/faiface/beep/wiki/Hello,-Beep!
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start task",

@@ -13,7 +13,6 @@ import (
 var (
 	mu                 sync.Mutex
 	speakerInitialized bool
-	originalSampleRate beep.SampleRate
 )
 
 type Player struct {
@@ -77,7 +76,6 @@ func init_speaker(format beep.Format) {
 		if err != nil {
 			fmt.Println("Speaker initialization unsuccessful: ", err)
 		}
-		originalSampleRate = format.SampleRate
 		speakerInitialized = true
 	}
 }
