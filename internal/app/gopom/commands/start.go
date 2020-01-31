@@ -14,8 +14,6 @@ var startCmd = &cobra.Command{
 	Short: "Start task",
 	Run: func(cmd *cobra.Command, args []string) {
 		taskName := args[0]
-		task.NewPomodoro(taskName, 5, 5, 5, 4)
-		//subtask := task.NewSubtask(taskName, 5, "./beep.mp3", "./placeholder.mp3")
-		//subtask.Work()
+		task.NewPomodoro(taskName, 5, 5, 5, 4).Start()
 	},
 }
