@@ -35,8 +35,6 @@ func (s *Subtask) Init(name string, duration int, workSound string, finishSound 
 }
 
 func (s *Subtask) Work() {
-	fmt.Println("Working on: ", s.name)
-
 	go s.workSound.PlayLoop()
 
 	for i := 0; i < s.duration; i++ {
