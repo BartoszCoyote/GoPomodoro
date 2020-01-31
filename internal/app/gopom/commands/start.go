@@ -25,7 +25,7 @@ var startCmd = &cobra.Command{
 
 		fmt.Print("started task :", taskName)
 
-		subtask := task.NewSubtask(taskName, 3, "./timer_short.ogg", "./timer_short2.ogg")
+		subtask := task.NewSubtask(taskName, 3, "./timer.mp3", "./finish.mp3")
 		subtask.Work()
 	},
 }
