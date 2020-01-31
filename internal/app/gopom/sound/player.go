@@ -3,16 +3,22 @@ package sound
 import (
 	"fmt"
 	"github.com/faiface/beep"
+	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
-	"github.com/faiface/beep/vorbis"
 	"os"
+	"sync"
 	"time"
 )
 
+var (
+	mu                 sync.Mutex
+	speakerInitialized bool
+	originalSampleRate beep.SampleRate
+)
+
 type Player struct {
-	sound    *beep.Buffer
-	loopChan chan bool
-	stopChan chan struct{}
+	sound    beep.StreamSeekCloser
+	stopChan chan bool
 }
 
 func NewPlayer(soundFile string) *Player {
@@ -20,64 +26,58 @@ func NewPlayer(soundFile string) *Player {
 }
 
 func (p *Player) Init(soundFile string) *Player {
-	p.loopChan = make(chan bool)
-	p.stopChan = make(chan struct{})
+	p.stopChan = make(chan bool)
 	p.sound = load_sound(soundFile)
 	return p
 }
 
 func (p *Player) PlayLoop() {
-	for {
-		sound := p.sound.Streamer(0, p.sound.Len())
-		speaker.Play(beep.Seq(sound, beep.Callback(func() {
-			p.loopChan <- true
-		})))
-		select {
-		case <-p.loopChan:
-			continue
-		case <-p.stopChan:
-			break
-		}
-	}
-}
+	controlledSound := &beep.Ctrl{Streamer: beep.Loop(-1, p.sound), Paused: false}
+	speaker.Play(controlledSound)
 
-func (p *Player) Play() {
-	p.Stop()
-	done := make(chan bool)
-	fmt.Println("1 finish start")
-	sound := p.sound.Streamer(0, p.sound.Len())
-	speaker.Play(beep.Seq(sound, beep.Callback(func() {
-		fmt.Println("3 finish done")
-		done <- true
-	})))
-	fmt.Println("2 finish waiting")
-	<-done
-	fmt.Println("4 finish stop")
+	<-p.stopChan
+	speaker.Lock()
+	controlledSound.Paused = true
+	speaker.Unlock()
 }
 
 func (p *Player) Stop() {
-	close(p.stopChan)
-	close(p.loopChan)
+	p.stopChan <- true
 }
 
-func load_sound(soundFile string) *beep.Buffer {
+func (p *Player) Play() {
+	done := make(chan bool)
+	speaker.Play(beep.Seq(p.sound, beep.Callback(func() {
+		done <- true
+	})))
+	<-done
+}
+
+func load_sound(soundFile string) beep.StreamSeekCloser {
 	timer, err := os.Open(soundFile)
 	if err != nil {
 		fmt.Println("Fatal error reading sound file ")
 	}
 
-	streamer, format, err := vorbis.Decode(timer)
+	streamer, format, err := mp3.Decode(timer)
 	if err != nil {
-		fmt.Println("unable to decode ogg vorbis file")
+		fmt.Println("unable to decode mp3 file")
 	}
-	err = speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
-	if err != nil {
-		fmt.Println("Speaker initialization unsuccessful: ", err)
+	init_speaker(format)
+
+	return streamer
+}
+
+func init_speaker(format beep.Format) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if !speakerInitialized {
+		err := speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+		if err != nil {
+			fmt.Println("Speaker initialization unsuccessful: ", err)
+		}
+		originalSampleRate = format.SampleRate
+		speakerInitialized = true
 	}
-
-	buffer := beep.NewBuffer(format)
-	buffer.Append(streamer)
-	streamer.Close()
-
-	return buffer
 }
