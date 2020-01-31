@@ -14,6 +14,6 @@ var startCmd = &cobra.Command{
 	Short: "Start task",
 	Run: func(cmd *cobra.Command, args []string) {
 		taskName := args[0]
-		task.NewPomodoro(taskName, 5, 5, 5, 4).Start()
+		task.NewPomodoro(taskName, 500, 500, 500, 4).Start()
 	},
 }
