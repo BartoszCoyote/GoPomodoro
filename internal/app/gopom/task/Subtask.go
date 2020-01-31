@@ -26,7 +26,7 @@ func (s *Subtask) Init(name string, duration int, workSound string, finishSound 
 	s.workSound = sound.NewPlayer(workSound)
 	s.finishSound = sound.NewPlayer(finishSound)
 
-	tmpl := `{{ "Working on task:" }} {{ string . "task" | green }} {{ bar . "<" "-" (cycle . "↖" "↗" "↘" "↙" ) "." ">"}} {{string . "timer" | green}}`
+	tmpl := `{{ string . "task" | green }} {{ bar . "<" "-" (cycle . "↖" "↗" "↘" "↙" ) "." ">"}} {{string . "timer" | green}}`
 	s.progress = pb.ProgressBarTemplate(tmpl).Start(s.duration)
 	s.progress.
 		Set("task", s.name).

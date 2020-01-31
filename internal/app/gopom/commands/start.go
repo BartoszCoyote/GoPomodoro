@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/task"
 	"github.com/spf13/cobra"
 )
@@ -15,10 +14,8 @@ var startCmd = &cobra.Command{
 	Short: "Start task",
 	Run: func(cmd *cobra.Command, args []string) {
 		taskName := args[0]
-
-		fmt.Print("started task :", taskName)
-
-		subtask := task.NewSubtask(taskName, 3, "./timer.mp3", "./finish.mp3")
-		subtask.Work()
+		task.NewPomodoro(taskName, 5, 5, 5, 4)
+		//subtask := task.NewSubtask(taskName, 5, "./beep.mp3", "./placeholder.mp3")
+		//subtask.Work()
 	},
 }
