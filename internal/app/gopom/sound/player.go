@@ -42,12 +42,17 @@ func (p *Player) PlayLoop() {
 }
 
 func (p *Player) Play() {
+	p.Stop()
 	done := make(chan bool)
+	fmt.Println("1 finish start")
 	sound := p.sound.Streamer(0, p.sound.Len())
 	speaker.Play(beep.Seq(sound, beep.Callback(func() {
+		fmt.Println("3 finish done")
 		done <- true
 	})))
+	fmt.Println("2 finish waiting")
 	<-done
+	fmt.Println("4 finish stop")
 }
 
 func (p *Player) Stop() {
@@ -58,15 +63,17 @@ func (p *Player) Stop() {
 func load_sound(soundFile string) *beep.Buffer {
 	timer, err := os.Open(soundFile)
 	if err != nil {
-		fmt.Print("Fatal error reading sound file ")
+		fmt.Println("Fatal error reading sound file ")
 	}
 
 	streamer, format, err := vorbis.Decode(timer)
 	if err != nil {
-		fmt.Print("unable to decode mp3 file")
+		fmt.Println("unable to decode ogg vorbis file")
 	}
-
-	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+	err = speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+	if err != nil {
+		fmt.Println("Speaker initialization unsuccessful: ", err)
+	}
 
 	buffer := beep.NewBuffer(format)
 	buffer.Append(streamer)
