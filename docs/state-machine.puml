@@ -7,7 +7,7 @@ if "how many \nwork markers" then
   -up-> Working state
 else
   -down->[>= 4] "Long rest state"
-  -down->[Ending process] (*)
+  -up->[Restart process] "Init state"
 endif
 
 @enduml
