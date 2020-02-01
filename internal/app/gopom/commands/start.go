@@ -1,11 +1,15 @@
 package commands
+
 import (
 	"fmt"
+	"github.com/BartoszCoyote/GoPomodoro/config"
+	"github.com/cheggaaa/pb/v3"
 	"github.com/faiface/beep"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
 	"github.com/spf13/cobra"
-	"github.com/cheggaaa/pb/v3"
+	"github.com/spf13/viper"
+	"log"
 	"os"
 	"time"
 )
@@ -44,12 +48,12 @@ var startCmd = &cobra.Command{
 		defer streamer.Close()
 
 		done := make(chan bool)
-		speaker.Play(beep.Seq(streamer, beep.Callback(func(){
+		speaker.Play(beep.Seq(streamer, beep.Callback(func() {
 			done <- true
 		})))
 
 		// 25 minutes
-		seconds := 25 * 60
+		seconds := getTimers()
 
 		tmpl := `{{ "Working on task:" }} {{ string . "task" | green }} {{ bar . "<" "-" (cycle . "↖" "↗" "↘" "↙" ) "." ">"}} {{string . "timer" | green}}`
 		// start bar based on our template
@@ -60,11 +64,26 @@ var startCmd = &cobra.Command{
 
 		for i := 0; i < seconds; i++ {
 			bar.Increment()
-			time.Sleep(1*time.Second)
+			time.Sleep(1 * time.Second)
 			bar.Set("timer", fmtTimer(i))
 		}
 		<-done
 
 		bar.Finish()
 	},
+}
+
+func getTimers() int {
+
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	var configuration config.Configuration
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("Error reading config file, %s", err)
+	}
+	err := viper.Unmarshal(&configuration)
+	if err != nil {
+		log.Fatalf("unable to decode into struct, %v", err)
+	}
+	return configuration.Pomodoro.Timer
 }
