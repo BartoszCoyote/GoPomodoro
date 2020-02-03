@@ -17,17 +17,14 @@ var (
 
 type Player struct {
 	sound    beep.StreamSeekCloser
-	stopChan chan bool
+	stopChan chan struct{}
 }
 
 func NewPlayer(soundFile string) *Player {
-	return new(Player).Init(soundFile)
-}
-
-func (p *Player) Init(soundFile string) *Player {
-	p.stopChan = make(chan bool)
-	p.sound = load_sound(soundFile)
-	return p
+	return &Player{
+		load_sound(soundFile),
+		make(chan struct{}),
+	}
 }
 
 func (p *Player) PlayLoop() {
@@ -41,13 +38,13 @@ func (p *Player) PlayLoop() {
 }
 
 func (p *Player) Stop() {
-	p.stopChan <- true
+	close(p.stopChan)
 }
 
 func (p *Player) Play() {
-	done := make(chan bool)
+	done := make(chan struct{})
 	speaker.Play(beep.Seq(p.sound, beep.Callback(func() {
-		done <- true
+		close(done)
 	})))
 	<-done
 }
