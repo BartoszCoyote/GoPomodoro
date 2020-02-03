@@ -31,23 +31,19 @@ type Pomodoro struct {
 }
 
 func NewPomodoro(taskName string, workDuration int, restDuration int, longRestDuration int, maxCycles int) *Pomodoro {
-	return new(Pomodoro).Init(taskName, workDuration, restDuration, longRestDuration, maxCycles)
+	return &Pomodoro{
+		taskName,
+		workDuration,
+		restDuration,
+		longRestDuration,
+		0,
+		maxCycles,
+		initStateMachine(),
+	}
 }
 
-func (p *Pomodoro) Init(taskName string, workDuration int, restDuration int, longRestDuration int, maxCycles int) *Pomodoro {
-	p.taskName = taskName
-	p.workDuration = workDuration
-	p.restDuration = restDuration
-	p.longRestDuration = longRestDuration
-	p.maxCycles = maxCycles
-	p.cycles = 0
-	p.init_state_machine()
-
-	return p
-}
-
-func (p *Pomodoro) init_state_machine() {
-	p.stateMachine = fsm.NewFSM(
+func initStateMachine() *fsm.FSM {
+	return fsm.NewFSM(
 		INITIALIZED_STATE,
 		fsm.Events{
 			{Src: []string{INITIALIZED_STATE}, Name: WORK_STARTED_EVENT, Dst: WORK_STATE},
