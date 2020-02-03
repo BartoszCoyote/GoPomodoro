@@ -1,8 +1,11 @@
-package task
+package pomodoro
 
 import (
 	"fmt"
+	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/sound"
+	"github.com/cheggaaa/pb/v3"
 	"github.com/looplab/fsm"
+	"time"
 )
 
 const (
@@ -30,6 +33,14 @@ type Pomodoro struct {
 	stateMachine     *fsm.FSM
 }
 
+type Subtask struct {
+	duration    int
+	name        string
+	workSound   *sound.Player
+	finishSound *sound.Player
+	progress    *pb.ProgressBar
+}
+
 func NewPomodoro(taskName string, workDuration int, restDuration int, longRestDuration int, maxCycles int) *Pomodoro {
 	return &Pomodoro{
 		taskName,
@@ -42,23 +53,32 @@ func NewPomodoro(taskName string, workDuration int, restDuration int, longRestDu
 	}
 }
 
-func initStateMachine() *fsm.FSM {
-	return fsm.NewFSM(
-		INITIALIZED_STATE,
-		fsm.Events{
-			{Src: []string{INITIALIZED_STATE}, Name: WORK_STARTED_EVENT, Dst: WORK_STATE},
-			{Src: []string{WORK_STATE}, Name: WORK_FINISHED_EVENT, Dst: WORK_COUNT_EVALUATION_STATE},
-			{Src: []string{WORK_COUNT_EVALUATION_STATE}, Name: MORE_WORK_NEEDED_EVENT, Dst: REST_STATE},
-			{Src: []string{WORK_COUNT_EVALUATION_STATE}, Name: NO_MORE_WORK_NEEDED_EVENT, Dst: LONG_REST_STATE},
-			{Src: []string{REST_STATE}, Name: REST_FINISHED_EVENT, Dst: WORK_STATE},
-			{Src: []string{LONG_REST_STATE}, Name: WORK_RESTARTED_EVENT, Dst: INITIALIZED_STATE},
-		},
-		fsm.Callbacks{
-			//"enter_state": func(event *fsm.Event) {
-			//	fmt.Printf("from %s to %s\n", event.Src, event.Dst)
-			//},
-		},
-	)
+func NewSubtask(name string, duration int, workSound string, finishSound string) *Subtask {
+	barTemplate := `{{ string . "task" | green }} {{ bar . "▇" "▇" (cycle . "▂" "▃" "▅" "▆" "▅" "▃" "▂" ) "_" "▇"}} {{string . "timer" | green}}`
+	return &Subtask{
+		duration,
+		name,
+		sound.NewPlayer(workSound),
+		sound.NewPlayer(finishSound),
+		pb.ProgressBarTemplate(barTemplate).
+			Start(duration).
+			Set("task", name).
+			Set("timer", fmtTimer(0)),
+	}
+}
+
+func (s *Subtask) Work() {
+	go s.workSound.PlayLoop()
+
+	for i := 0; i < s.duration; i++ {
+		s.progress.Increment()
+		time.Sleep(1 * time.Second)
+		s.progress.Set("timer", fmtTimer(i))
+	}
+
+	s.workSound.Stop()
+	s.progress.Finish()
+	s.finishSound.Play()
 }
 
 func (p *Pomodoro) Start() {
@@ -79,6 +99,25 @@ func (p *Pomodoro) Start() {
 			fmt.Println("State transition unsuccessful: ", err)
 		}
 	}
+}
+
+func initStateMachine() *fsm.FSM {
+	return fsm.NewFSM(
+		INITIALIZED_STATE,
+		fsm.Events{
+			{Src: []string{INITIALIZED_STATE}, Name: WORK_STARTED_EVENT, Dst: WORK_STATE},
+			{Src: []string{WORK_STATE}, Name: WORK_FINISHED_EVENT, Dst: WORK_COUNT_EVALUATION_STATE},
+			{Src: []string{WORK_COUNT_EVALUATION_STATE}, Name: MORE_WORK_NEEDED_EVENT, Dst: REST_STATE},
+			{Src: []string{WORK_COUNT_EVALUATION_STATE}, Name: NO_MORE_WORK_NEEDED_EVENT, Dst: LONG_REST_STATE},
+			{Src: []string{REST_STATE}, Name: REST_FINISHED_EVENT, Dst: WORK_STATE},
+			{Src: []string{LONG_REST_STATE}, Name: WORK_RESTARTED_EVENT, Dst: INITIALIZED_STATE},
+		},
+		fsm.Callbacks{
+			//"enter_state": func(event *fsm.Event) {
+			//	fmt.Printf("from %s to %s\n", event.Src, event.Dst)
+			//},
+		},
+	)
 }
 
 func (p *Pomodoro) init() string {
@@ -121,4 +160,10 @@ func (p *Pomodoro) longRest() string {
 	p.cycles = 0
 
 	return WORK_RESTARTED_EVENT
+}
+
+func fmtTimer(t int) string {
+	m := t / 60
+	s := t - (m * 60)
+	return fmt.Sprintf("%02d:%02d", m, s)
 }

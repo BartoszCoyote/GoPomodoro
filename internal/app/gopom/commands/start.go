@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/task"
+	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/pomodoro"
 	"github.com/spf13/cobra"
 )
 
@@ -14,6 +14,6 @@ var startCmd = &cobra.Command{
 	Short: "Start task",
 	Run: func(cmd *cobra.Command, args []string) {
 		taskName := args[0]
-		task.NewPomodoro(taskName, 500, 500, 500, 4).Start()
+		pomodoro.NewPomodoro(taskName, 500, 500, 500, 4).Start()
 	},
 }
