@@ -1,0 +1,15 @@
+language: go
+matrix:
+  include:
+    - os: linux
+      dist: xenial
+      go: 1.13.x
+    - os: osx
+      go: 1.13.x
+  fast_finish: true
+
+script:
+  - make build
+env:
+  global:
+    - GO111MODULE=on
