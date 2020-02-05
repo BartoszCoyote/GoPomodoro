@@ -142,9 +142,8 @@ func (p *Pomodoro) evaluateWorkCount() string {
 	if p.cycles >= p.maxCycles {
 		fmt.Println("You have finished working on task ", p.taskName)
 		return NO_MORE_WORK_NEEDED_EVENT
-	} else {
-		return MORE_WORK_NEEDED_EVENT
 	}
+	return MORE_WORK_NEEDED_EVENT
 }
 
 func (p *Pomodoro) rest() string {
