@@ -22,7 +22,7 @@ type Player struct {
 
 func NewPlayer(soundFile string) *Player {
 	return &Player{
-		load_sound(soundFile),
+		loadSound(soundFile),
 		make(chan struct{}),
 	}
 }
@@ -49,7 +49,7 @@ func (p *Player) Play() {
 	<-done
 }
 
-func load_sound(soundFile string) beep.StreamSeekCloser {
+func loadSound(soundFile string) beep.StreamSeekCloser {
 	timer, err := os.Open(soundFile)
 	if err != nil {
 		fmt.Println("Fatal error reading sound file ")
@@ -59,12 +59,12 @@ func load_sound(soundFile string) beep.StreamSeekCloser {
 	if err != nil {
 		fmt.Println("unable to decode mp3 file")
 	}
-	init_speaker(format)
+	initSpeaker(format)
 
 	return streamer
 }
 
-func init_speaker(format beep.Format) {
+func initSpeaker(format beep.Format) {
 	mu.Lock()
 	defer mu.Unlock()
 
