@@ -1,4 +1,4 @@
-![](https://travis-ci.org/michal-franc/GoPomodoro.svg?branch=master)
+![](https://travis-ci.org/BartoszCoyote/GoPomodoro.svg?branch=master) - [last build](https://travis-ci.org/BartoszCoyote/GoPomodoro)
 
 
 # GoPomodoro
