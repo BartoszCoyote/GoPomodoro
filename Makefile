@@ -1,4 +1,4 @@
-build: fmt lint test
+build: fmt test
 	mkdir -p bin && GO111MODULE=on go build -o ./bin/gopom ./cmd/gopom
 
 run: build
