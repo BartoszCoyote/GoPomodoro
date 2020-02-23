@@ -2,6 +2,8 @@
 
 UNAME=$(uname)
 
+echo Running build for $UNAME
+
 if [[ $UNAME == "Linux" ]]; then
     apt-get install -y libasound2-dev
 fi
