@@ -1,13 +1,10 @@
-ensure-deps:
-	./ensure-deps.sh
-
 build: fmt test
 	mkdir -p bin && GO111MODULE=on go build -o ./bin/gopom ./cmd/gopom
 
 run: build
 	./bin/gopom "$(command)"
 
-test: ensure-deps
+test:
 	GO111MODULE=on go test ./...
 
 fmt:
