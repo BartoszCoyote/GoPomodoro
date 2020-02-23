@@ -2,10 +2,11 @@ package pomodoro
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/sound"
 	"github.com/cheggaaa/pb/v3"
 	"github.com/looplab/fsm"
-	"time"
 )
 
 const (
@@ -122,7 +123,7 @@ func initStateMachine() *fsm.FSM {
 
 func (p *Pomodoro) init() string {
 	taskStartupName := "Starting work on " + p.taskName
-	subtask := NewSubtask(taskStartupName, 2, "./beep.mp3", "./placeholder.mp3")
+	subtask := NewSubtask(taskStartupName, 2, "/beep.mp3", "/placeholder.mp3")
 	subtask.Work()
 
 	return WORK_STARTED_EVENT
@@ -130,7 +131,7 @@ func (p *Pomodoro) init() string {
 
 func (p *Pomodoro) work() string {
 	workName := "Working on " + p.taskName
-	subtask := NewSubtask(workName, p.workDuration, "./timer.mp3", "./finish.mp3")
+	subtask := NewSubtask(workName, p.workDuration, "/timer.mp3", "/finish.mp3")
 	subtask.Work()
 
 	p.cycles++
@@ -147,14 +148,14 @@ func (p *Pomodoro) evaluateWorkCount() string {
 }
 
 func (p *Pomodoro) rest() string {
-	subtask := NewSubtask("Resting...", p.restDuration, "./placeholder.mp3", "./finish.mp3")
+	subtask := NewSubtask("Resting...", p.restDuration, "/placeholder.mp3", "/finish.mp3")
 	subtask.Work()
 
 	return REST_FINISHED_EVENT
 }
 
 func (p *Pomodoro) longRest() string {
-	subtask := NewSubtask("Long rest...", p.longRestDuration, "./placeholder.mp3", "./finish.mp3")
+	subtask := NewSubtask("Long rest...", p.longRestDuration, "/placeholder.mp3", "/finish.mp3")
 	subtask.Work()
 	p.cycles = 0
 

@@ -22,3 +22,6 @@
 
 # bin folder
 bin
+
+# this is generated file
+statik.go

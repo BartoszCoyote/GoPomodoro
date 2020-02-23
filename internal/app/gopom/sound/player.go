@@ -2,12 +2,17 @@ package sound
 
 import (
 	"fmt"
+	"log"
+	"sync"
+	"time"
+
+	// required for statik file system to enable embeeded resources
+	_ "github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/sound/soundpack"
+
 	"github.com/faiface/beep"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
-	"os"
-	"sync"
-	"time"
+	"github.com/rakyll/statik/fs"
 )
 
 var (
@@ -50,7 +55,13 @@ func (p *Player) Play() {
 }
 
 func loadSound(soundFile string) beep.StreamSeekCloser {
-	timer, err := os.Open(soundFile)
+
+	statikFS, err := fs.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	timer, err := statikFS.Open(soundFile)
 	if err != nil {
 		fmt.Println("Fatal error reading sound file ")
 	}
