@@ -9,7 +9,7 @@ Proposed stack:
 
 # Required dependency:
 
-The package `alsa/asoundlib.h` is required for sound playback. It ca be installed as a part of the following package:`libasound2-dev`
+The package `alsa/asoundlib.h` is required for sound playback. It can be installed as a part of the following package:`libasound2-dev`
 
 If `make` complains about this - install with:
 
