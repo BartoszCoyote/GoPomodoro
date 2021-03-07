@@ -2,6 +2,8 @@ package pomodoro
 
 import (
 	"fmt"
+	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/slack"
+	"os"
 	"time"
 
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/sound"
@@ -126,6 +128,11 @@ func (p *Pomodoro) init() string {
 	subtask := NewSubtask(taskStartupName, 2, "/beep.mp3", "/placeholder.mp3")
 	subtask.Work()
 
+	slackDndEnabled := os.Getenv("SLACK_DND_ENABLED")
+	if slackDndEnabled == "TRUE" {
+		slack.SetDnd(25)
+	}
+
 	return WORK_STARTED_EVENT
 }
 
@@ -135,6 +142,11 @@ func (p *Pomodoro) work() string {
 	subtask.Work()
 
 	p.cycles++
+
+	slackDndEnabled := os.Getenv("SLACK_DND_ENABLED")
+	if slackDndEnabled == "TRUE" {
+		slack.EndDnd()
+	}
 
 	return WORK_FINISHED_EVENT
 }
