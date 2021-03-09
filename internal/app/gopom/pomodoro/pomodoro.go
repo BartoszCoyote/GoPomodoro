@@ -130,8 +130,10 @@ func initStateMachine() *fsm.FSM {
 
 func (p *Pomodoro) init() string {
 	taskStartupName := "Starting work on " + p.taskName
-	subtask := NewSubtask(taskStartupName, 2, "/beep.mp3", "/placeholder.mp3")
-	subtask.Work()
+	beepSound := NewSubtask(taskStartupName, 2, "/beep.mp3", "/placeholder.mp3")
+	beepSound.Work()
+	return WORK_STARTED_EVENT
+}
 
 	slackDndEnabled := os.Getenv("SLACK_DND_ENABLED")
 	if slackDndEnabled == "TRUE" {
