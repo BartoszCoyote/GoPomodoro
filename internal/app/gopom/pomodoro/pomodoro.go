@@ -135,22 +135,19 @@ func (p *Pomodoro) init() string {
 	return WORK_STARTED_EVENT
 }
 
+func (p *Pomodoro) work() string {
+	//TODO: refactor to config system and config file
 	slackDndEnabled := os.Getenv("SLACK_DND_ENABLED")
 	if slackDndEnabled == "TRUE" {
-		slack.SetDnd(25)
+		slack.SetDnd(p.workDuration)
 	}
 
-	return WORK_STARTED_EVENT
-}
-
-func (p *Pomodoro) work() string {
 	workName := "Working on " + p.taskName
 	subtask := NewSubtask(workName, p.workDuration, "/timer.mp3", "/finish.mp3")
 	subtask.Work()
 
 	p.cycles++
 
-	slackDndEnabled := os.Getenv("SLACK_DND_ENABLED")
 	if slackDndEnabled == "TRUE" {
 		slack.EndDnd()
 	}
