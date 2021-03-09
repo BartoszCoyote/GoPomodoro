@@ -1,6 +1,7 @@
 package pomodoro
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/slack"
 	"os"
@@ -17,6 +18,7 @@ const (
 	WORK_COUNT_EVALUATION_STATE string = "counting_work"
 	REST_STATE                  string = "resting"
 	LONG_REST_STATE             string = "long_resting"
+	WORK_CONTINUE_PROMPT        string = "waiting_for_user"
 
 	WORK_STARTED_EVENT        string = "started"
 	WORK_FINISHED_EVENT       string = "work_finished"
@@ -24,6 +26,7 @@ const (
 	MORE_WORK_NEEDED_EVENT    string = "more_work_needed"
 	NO_MORE_WORK_NEEDED_EVENT string = "no_more_work_needed"
 	WORK_RESTARTED_EVENT      string = "restarted"
+	WORK_RESUME_EVENT         string = "resume_work"
 )
 
 type Pomodoro struct {
@@ -92,6 +95,7 @@ func (p *Pomodoro) Start() {
 	stateHandler[WORK_COUNT_EVALUATION_STATE] = p.evaluateWorkCount
 	stateHandler[REST_STATE] = p.rest
 	stateHandler[LONG_REST_STATE] = p.longRest
+	stateHandler[WORK_CONTINUE_PROMPT] = p.waitForUser
 
 	for {
 		handler := stateHandler[p.stateMachine.Current()]
@@ -112,7 +116,8 @@ func initStateMachine() *fsm.FSM {
 			{Src: []string{WORK_STATE}, Name: WORK_FINISHED_EVENT, Dst: WORK_COUNT_EVALUATION_STATE},
 			{Src: []string{WORK_COUNT_EVALUATION_STATE}, Name: MORE_WORK_NEEDED_EVENT, Dst: REST_STATE},
 			{Src: []string{WORK_COUNT_EVALUATION_STATE}, Name: NO_MORE_WORK_NEEDED_EVENT, Dst: LONG_REST_STATE},
-			{Src: []string{REST_STATE}, Name: REST_FINISHED_EVENT, Dst: WORK_STATE},
+			{Src: []string{REST_STATE}, Name: REST_FINISHED_EVENT, Dst: WORK_CONTINUE_PROMPT},
+			{Src: []string{WORK_CONTINUE_PROMPT}, Name: WORK_RESUME_EVENT, Dst: WORK_STATE},
 			{Src: []string{LONG_REST_STATE}, Name: WORK_RESTARTED_EVENT, Dst: INITIALIZED_STATE},
 		},
 		fsm.Callbacks{
@@ -172,6 +177,20 @@ func (p *Pomodoro) longRest() string {
 	p.cycles = 0
 
 	return WORK_RESTARTED_EVENT
+}
+
+func (p *Pomodoro) waitForUser() string {
+	//TODO: refactor to config system and config file
+	waitForUser := os.Getenv("WAIT_FOR_USER")
+	if waitForUser != "TRUE" {
+		return WORK_RESUME_EVENT
+	}
+
+	fmt.Println("Press any button to continue...")
+	inputScanner := bufio.NewScanner(os.Stdin)
+	inputScanner.Scan()
+
+	return WORK_RESUME_EVENT
 }
 
 func fmtTimer(t int) string {
