@@ -11,6 +11,7 @@ import (
 	"strings"
 )
 
+//TODO: refactor to config system and config file
 var TOKEN = getSlackToken()
 
 func getSlackToken() string {
@@ -70,8 +71,6 @@ func SetDnd(durationMinutes int) {
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	log.Println("DND set on slack.")
 }
 
 func EndDnd() {
@@ -81,6 +80,6 @@ func EndDnd() {
 
 	err := callSlack(urlS)
 	if err != nil {
-
+		fmt.Println(err)
 	}
 }

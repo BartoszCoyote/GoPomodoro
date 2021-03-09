@@ -15,6 +15,7 @@ var startCmd = &cobra.Command{
 	Short: "Start a task",
 	Run: func(cmd *cobra.Command, args []string) {
 		taskName := getTaskName(args)
+		//TODO: given config file add this durations as configurables
 		pomodoro.NewPomodoro(taskName, 25*60, 5*60, 20*60, 4).Start()
 	},
 }
