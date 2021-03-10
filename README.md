@@ -14,3 +14,9 @@ The package `alsa/asoundlib.h` is required for sound playback. It can be install
 If `make` complains about this - install with:
 
 `sudo apt-get install libasound2-dev`
+
+# Configuration
+
+- SLACK_TOKEN - Slack token used in DND functionality
+- ENABLE_SLACK_DND (true|false) - enable DND functionality
+- ENABLE_WORK_CONTINUE (true|false) - enable waiting for user prompt when moving on to new work session

@@ -15,8 +15,7 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "GoPomodoro",
 	Short: "Pomodoro in CLI",
-	Long: `Go pomodoro app in CLI the 
-best app in the world`,
+	Long:  `Go pomodoro app in CLI the best app in the world`,
 	//Run: func(cmd *cobra.Command, args []string) {
 	//},
 }
@@ -37,7 +36,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.GoPomodoro.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.GoPomodoro.env)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -57,15 +56,22 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".GoPomodoro" (without extension).
+		// Search config in home directory with name ".GoPomodoro.env".
 		viper.AddConfigPath(home)
 		viper.SetConfigName(".GoPomodoro")
+		viper.SetConfigType("env")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			fmt.Println("Config file not found: ", viper.ConfigFileUsed())
+		} else {
+			fmt.Println("Config file found but err when reading file:", viper.ConfigFileUsed(), err)
+		}
 	}
+
+	fmt.Println("Using config file:", viper.ConfigFileUsed())
 }

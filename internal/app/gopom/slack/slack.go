@@ -2,30 +2,19 @@ package slack
 
 import (
 	"fmt"
+	"github.com/spf13/viper"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 )
 
-//TODO: refactor to config system and config file
-//TODO: this is breaking functionality as you cant run app without slack token now
-var TOKEN = getSlackToken()
-
-func getSlackToken() string {
-	slackToken := os.Getenv("SLACK_TOKEN")
-	if slackToken == "" {
-		log.Fatal("Empty slack token - please provide valid SLACK_TOKEN")
-	}
-	return slackToken
-}
-
 func callSlack(urlS string) error {
 	form := url.Values{}
-	form.Add("token", TOKEN)
+	token := viper.GetString("SLACK_TOKEN")
+	form.Add("token", token)
 
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", urlS, strings.NewReader(form.Encode()))

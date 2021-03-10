@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/slack"
+	"github.com/spf13/viper"
 	"os"
 	"time"
 
@@ -136,9 +137,8 @@ func (p *Pomodoro) init() string {
 }
 
 func (p *Pomodoro) work() string {
-	//TODO: refactor to config system and config file
-	slackDndEnabled := os.Getenv("SLACK_DND_ENABLED")
-	if slackDndEnabled == "TRUE" {
+	slackDndEnabled := viper.GetBool("ENABLE_SLACK_DND")
+	if slackDndEnabled {
 		slack.SetDnd(p.workDuration)
 	}
 
@@ -148,7 +148,7 @@ func (p *Pomodoro) work() string {
 
 	p.cycles++
 
-	if slackDndEnabled == "TRUE" {
+	if slackDndEnabled {
 		slack.EndDnd()
 	}
 
@@ -179,9 +179,8 @@ func (p *Pomodoro) longRest() string {
 }
 
 func (p *Pomodoro) waitForUser() string {
-	//TODO: refactor to config system and config file
-	waitForUser := os.Getenv("WAIT_FOR_USER")
-	if waitForUser != "TRUE" {
+	waitForUser := viper.GetBool("ENABLE_WORK_CONTINUE")
+	if waitForUser {
 		return WORK_RESUMED_EVENT
 	}
 
