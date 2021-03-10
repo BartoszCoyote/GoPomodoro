@@ -12,6 +12,7 @@ import (
 )
 
 //TODO: refactor to config system and config file
+//TODO: this is breaking functionality as you cant run app without slack token now
 var TOKEN = getSlackToken()
 
 func getSlackToken() string {
