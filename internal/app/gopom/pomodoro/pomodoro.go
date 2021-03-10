@@ -26,7 +26,7 @@ const (
 	MORE_WORK_NEEDED_EVENT    string = "more_work_needed"
 	NO_MORE_WORK_NEEDED_EVENT string = "no_more_work_needed"
 	WORK_RESTARTED_EVENT      string = "restarted"
-	WORK_RESUME_EVENT         string = "resume_work"
+	WORK_RESUMED_EVENT        string = "resumed_work"
 )
 
 type Pomodoro struct {
@@ -117,7 +117,7 @@ func initStateMachine() *fsm.FSM {
 			{Src: []string{WORK_COUNT_EVALUATION_STATE}, Name: MORE_WORK_NEEDED_EVENT, Dst: REST_STATE},
 			{Src: []string{WORK_COUNT_EVALUATION_STATE}, Name: NO_MORE_WORK_NEEDED_EVENT, Dst: LONG_REST_STATE},
 			{Src: []string{REST_STATE}, Name: REST_FINISHED_EVENT, Dst: WORK_CONTINUE_PROMPT},
-			{Src: []string{WORK_CONTINUE_PROMPT}, Name: WORK_RESUME_EVENT, Dst: WORK_STATE},
+			{Src: []string{WORK_CONTINUE_PROMPT}, Name: WORK_RESUMED_EVENT, Dst: WORK_STATE},
 			{Src: []string{LONG_REST_STATE}, Name: WORK_RESTARTED_EVENT, Dst: INITIALIZED_STATE},
 		},
 		fsm.Callbacks{
@@ -182,14 +182,14 @@ func (p *Pomodoro) waitForUser() string {
 	//TODO: refactor to config system and config file
 	waitForUser := os.Getenv("WAIT_FOR_USER")
 	if waitForUser != "TRUE" {
-		return WORK_RESUME_EVENT
+		return WORK_RESUMED_EVENT
 	}
 
 	fmt.Println("Press any button to continue...")
 	inputScanner := bufio.NewScanner(os.Stdin)
 	inputScanner.Scan()
 
-	return WORK_RESUME_EVENT
+	return WORK_RESUMED_EVENT
 }
 
 func fmtTimer(t int) string {
