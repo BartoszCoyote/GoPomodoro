@@ -131,8 +131,8 @@ func initStateMachine() *fsm.FSM {
 
 func (p *Pomodoro) init() string {
 	taskStartupName := "Starting work on " + p.taskName
-	beepSound := NewSubtask(taskStartupName, 2, "/beep.mp3", "/placeholder.mp3")
-	beepSound.Work()
+	subtask := NewSubtask(taskStartupName, 2, "/beep.mp3", "/placeholder.mp3")
+	subtask.Work()
 	return WORK_STARTED_EVENT
 }
 
