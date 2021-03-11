@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/pomodoro"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func init() {
@@ -49,12 +50,17 @@ var startCmd = &cobra.Command{
 		internalFinishVolume := float64(finishVolume)/10 - 8
 
 		taskName := getTaskName(args)
+		workDuration := viper.GetInt("WORK_DURATION_MINUTES")
+		restDuration := viper.GetInt("REST_DURATION_MINUTES")
+		longRestDuration := viper.GetInt("LONG_REST_DURATION_MINUTES")
+		maxCycles := viper.GetInt("MAX_CYCLES")
+
 		pomodoro.NewPomodoro(&pomodoro.PomodoroSettings{
 			TaskName:          taskName,
-			WorkDuration:      25 * 60,
-			RestDuration:      5 * 60,
-			LongRestDuration:  20 * 60,
-			Cycles:            4,
+			WorkDuration:      workDuration * 60,
+			RestDuration:      restDuration * 60,
+			LongRestDuration:  longRestDuration * 60,
+			Cycles:            maxCycles,
 			WorkSoundVolume:   internalWorkVolume,
 			FinishSoundVolume: internalFinishVolume,
 		}).Start()
