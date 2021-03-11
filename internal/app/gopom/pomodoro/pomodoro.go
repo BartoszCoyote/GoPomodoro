@@ -30,14 +30,26 @@ const (
 	WORK_RESUMED_EVENT        string = "resumed_work"
 )
 
+type PomodoroSettings struct {
+	TaskName          string
+	WorkDuration      int
+	RestDuration      int
+	LongRestDuration  int
+	Cycles            int
+	WorkSoundVolume   float64
+	FinishSoundVolume float64
+}
+
 type Pomodoro struct {
-	taskName         string
-	workDuration     int
-	restDuration     int
-	longRestDuration int
-	cycles           int
-	maxCycles        int
-	stateMachine     *fsm.FSM
+	taskName          string
+	workDuration      int
+	restDuration      int
+	longRestDuration  int
+	cycles            int
+	maxCycles         int
+	workSoundVolume   float64
+	finishSoundVolume float64
+	stateMachine      *fsm.FSM
 }
 
 type Subtask struct {
@@ -48,25 +60,27 @@ type Subtask struct {
 	progress    *pb.ProgressBar
 }
 
-func NewPomodoro(taskName string, workDuration int, restDuration int, longRestDuration int, maxCycles int) *Pomodoro {
+func NewPomodoro(pomodoroSettings *PomodoroSettings) *Pomodoro {
 	return &Pomodoro{
-		taskName,
-		workDuration,
-		restDuration,
-		longRestDuration,
+		pomodoroSettings.TaskName,
+		pomodoroSettings.WorkDuration,
+		pomodoroSettings.RestDuration,
+		pomodoroSettings.LongRestDuration,
 		0,
-		maxCycles,
+		pomodoroSettings.Cycles,
+		pomodoroSettings.WorkSoundVolume,
+		pomodoroSettings.FinishSoundVolume,
 		initStateMachine(),
 	}
 }
 
-func NewSubtask(name string, duration int, workSound string, finishSound string) *Subtask {
+func newSubtask(name string, duration int, workSound string, workSoundVolume float64, finishSound string, finishSoundVolume float64) *Subtask {
 	barTemplate := `{{ string . "task" | green }} {{ bar . "▇" "▇" (cycle . "▂" "▃" "▅" "▆" "▅" "▃" "▂" ) "_" "▇"}} {{string . "timer" | green}}`
 	return &Subtask{
 		duration,
 		name,
-		sound.NewPlayer(workSound),
-		sound.NewPlayer(finishSound),
+		sound.NewPlayer(workSound, workSoundVolume),
+		sound.NewPlayer(finishSound, finishSoundVolume),
 		pb.ProgressBarTemplate(barTemplate).
 			Start(duration).
 			Set("task", name).
@@ -74,7 +88,7 @@ func NewSubtask(name string, duration int, workSound string, finishSound string)
 	}
 }
 
-func (s *Subtask) Work() {
+func (s *Subtask) work() {
 	go s.workSound.PlayLoop()
 
 	for i := 0; i < s.duration; i++ {
@@ -131,8 +145,9 @@ func initStateMachine() *fsm.FSM {
 
 func (p *Pomodoro) init() string {
 	taskStartupName := "Starting work on " + p.taskName
-	subtask := NewSubtask(taskStartupName, 2, "/beep.mp3", "/placeholder.mp3")
-	subtask.Work()
+	subtask := newSubtask(taskStartupName, 2, "/beep.mp3", p.workSoundVolume, "/placeholder.mp3", p.finishSoundVolume)
+	subtask.work()
+
 	return WORK_STARTED_EVENT
 }
 
@@ -143,8 +158,8 @@ func (p *Pomodoro) work() string {
 	}
 
 	workName := "Working on " + p.taskName
-	subtask := NewSubtask(workName, p.workDuration, "/timer.mp3", "/finish.mp3")
-	subtask.Work()
+	subtask := newSubtask(workName, p.workDuration, "/timer.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume)
+	subtask.work()
 
 	p.cycles++
 
@@ -164,15 +179,15 @@ func (p *Pomodoro) evaluateWorkCount() string {
 }
 
 func (p *Pomodoro) rest() string {
-	subtask := NewSubtask("Resting...", p.restDuration, "/placeholder.mp3", "/finish.mp3")
-	subtask.Work()
+	subtask := newSubtask("Resting...", p.restDuration, "/placeholder.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume)
+	subtask.work()
 
 	return REST_FINISHED_EVENT
 }
 
 func (p *Pomodoro) longRest() string {
-	subtask := NewSubtask("Long rest...", p.longRestDuration, "/placeholder.mp3", "/finish.mp3")
-	subtask.Work()
+	subtask := newSubtask("Long rest...", p.longRestDuration, "/placeholder.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume)
+	subtask.work()
 	p.cycles = 0
 
 	return WORK_RESTARTED_EVENT
