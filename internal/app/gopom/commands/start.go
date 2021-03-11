@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/pomodoro"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func init() {
@@ -15,8 +16,11 @@ var startCmd = &cobra.Command{
 	Short: "Start a task",
 	Run: func(cmd *cobra.Command, args []string) {
 		taskName := getTaskName(args)
-		//TODO: given config file add this durations as configurables
-		pomodoro.NewPomodoro(taskName, 25*60, 5*60, 20*60, 4).Start()
+		workDuration := viper.GetInt("WORK_DURATION_MINUTES")
+		restDuration := viper.GetInt("REST_DURATION_MINUTES")
+		longRestDuration := viper.GetInt("LONG_REST_DURATION_MINUTES")
+		maxCycles := viper.GetInt("MAX_CYCLES")
+		pomodoro.NewPomodoro(taskName, workDuration*60, restDuration*60, longRestDuration*60, maxCycles).Start()
 	},
 }
 

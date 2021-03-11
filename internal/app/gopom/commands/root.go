@@ -76,6 +76,10 @@ func initConfig() {
 	viper.SetDefault("SLACK_TOKEN", "")
 	viper.SetDefault("ENABLE_SLACK_DND", false)
 	viper.SetDefault("ENABLE_WORK_CONTINUE", false)
+	viper.SetDefault("WORK_DURATION_MINUTES", 25)
+	viper.SetDefault("REST_DURATION_MINUTES", 5)
+	viper.SetDefault("LONG_REST_DURATION_MINUTES", 20)
+	viper.SetDefault("MAX_CYCLES", 4)
 
 	fmt.Println("Using config file:", viper.ConfigFileUsed())
 }
