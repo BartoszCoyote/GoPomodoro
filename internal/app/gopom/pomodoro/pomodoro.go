@@ -215,7 +215,7 @@ func (p *Pomodoro) longRest() string {
 
 func (p *Pomodoro) waitForUser() string {
 	waitForUser := viper.GetBool("ENABLE_WORK_CONTINUE")
-	if waitForUser {
+	if !waitForUser {
 		return WORK_RESUMED_EVENT
 	}
 
