@@ -31,7 +31,7 @@ func callSlack(urlS string) error {
 	if resp != nil {
 		defer func() {
 			if err := resp.Body.Close(); err != nil {
-				err = fmt.Errorf("error when closing response body - %s", err)
+				log.Fatalf("error when closing response body - %s", err)
 			}
 		}()
 	}
@@ -66,7 +66,7 @@ func SetDnd(durationMinutes int) {
 func EndDnd() {
 	log.Println("Ending DND on slack.")
 
-	urlS := fmt.Sprintf("https://slack.com/api/dnd.endSnooze")
+	urlS := "https://slack.com/api/dnd.endSnooze"
 
 	err := callSlack(urlS)
 	if err != nil {
