@@ -27,7 +27,8 @@ const (
 	MORE_WORK_NEEDED_EVENT    string = "more_work_needed"
 	NO_MORE_WORK_NEEDED_EVENT string = "no_more_work_needed"
 	WORK_RESTARTED_EVENT      string = "restarted"
-	WORK_RESUMED_EVENT        string = "resumed_work"
+	WORK_RESUMED_EVENT        string = "resumed"
+	WORK_INTERRUPTED_EVENT    string = "interrupted"
 )
 
 type PomodoroSettings struct {
@@ -88,7 +89,7 @@ func newSubtask(name string, duration int, workSound string, workSoundVolume flo
 	}
 }
 
-func (s *Subtask) work() {
+func (s *Subtask) work() bool {
 	go s.workSound.PlayLoop()
 
 	// stop the work sound and progress regardless of the outcome of the task - finished, partially finished
@@ -98,13 +99,16 @@ func (s *Subtask) work() {
 	interrupt := false
 
 	go func(interrupt *bool) {
-		// the read will block this goroutine
+		// the read will block this goroutine waiting for I/O
 		reader := bufio.NewReader(os.Stdin)
 		_, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Println("error error")
 		}
 
+		// We can get away with a pointer here as we dont need full syncrhonization
+		// Work loop can detect interrupt after 1-2-3 seconds it is not an issue
+		// We could improve it by changing work for loop samplging from 1 per second to something faster
 		*interrupt = true
 	}(&interrupt)
 
@@ -114,12 +118,12 @@ func (s *Subtask) work() {
 		s.progress.Set("timer", fmtTimer(i))
 
 		if interrupt {
-			return
+			return false
 		}
 	}
 
 	s.finishSound.Play()
-	//return FULL_POMODORO
+	return true
 }
 
 func (p *Pomodoro) Start() {
@@ -149,6 +153,7 @@ func initStateMachine() *fsm.FSM {
 		fsm.Events{
 			{Src: []string{INITIALIZED_STATE}, Name: WORK_STARTED_EVENT, Dst: WORK_STATE},
 			{Src: []string{WORK_STATE}, Name: WORK_FINISHED_EVENT, Dst: WORK_COUNT_EVALUATION_STATE},
+			{Src: []string{WORK_STATE}, Name: WORK_INTERRUPTED_EVENT, Dst: WORK_CONTINUE_PROMPT},
 			{Src: []string{WORK_COUNT_EVALUATION_STATE}, Name: MORE_WORK_NEEDED_EVENT, Dst: REST_STATE},
 			{Src: []string{WORK_COUNT_EVALUATION_STATE}, Name: NO_MORE_WORK_NEEDED_EVENT, Dst: LONG_REST_STATE},
 			{Src: []string{REST_STATE}, Name: REST_FINISHED_EVENT, Dst: WORK_CONTINUE_PROMPT},
@@ -179,15 +184,19 @@ func (p *Pomodoro) work() string {
 
 	workName := "Working on " + p.taskName
 	subtask := newSubtask(workName, p.workDuration, "/timer.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume)
-	subtask.work()
-
-	p.cycles++
+	workFinished := subtask.work()
 
 	if slackDndEnabled {
 		slack.EndDnd()
 	}
 
-	return WORK_FINISHED_EVENT
+	if workFinished {
+		p.cycles++
+		return WORK_FINISHED_EVENT
+	} else {
+		fmt.Println("Pomodoro was interrupted.")
+		return WORK_INTERRUPTED_EVENT
+	}
 }
 
 func (p *Pomodoro) evaluateWorkCount() string {
