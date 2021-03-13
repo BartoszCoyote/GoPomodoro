@@ -11,7 +11,7 @@ func main() {
 
 	//TODO: introduce cleanup funcion/module that would contain all the logic related to `cleanup`
 	go func() {
-		sigchan := make(chan os.Signal)
+		sigchan := make(chan os.Signal, 1)
 		signal.Notify(sigchan, os.Interrupt)
 		<-sigchan
 		slack.EndDnd()
