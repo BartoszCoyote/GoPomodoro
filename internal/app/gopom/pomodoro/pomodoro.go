@@ -91,15 +91,35 @@ func newSubtask(name string, duration int, workSound string, workSoundVolume flo
 func (s *Subtask) work() {
 	go s.workSound.PlayLoop()
 
+	// stop the work sound and progress regardless of the outcome of the task - finished, partially finished
+	defer s.workSound.Stop()
+	defer s.progress.Finish()
+
+	interrupt := false
+
+	go func(interrupt *bool) {
+		// the read will block this goroutine
+		reader := bufio.NewReader(os.Stdin)
+		_, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("error error")
+		}
+
+		*interrupt = true
+	}(&interrupt)
+
 	for i := 0; i < s.duration; i++ {
 		s.progress.Increment()
 		time.Sleep(1 * time.Second)
 		s.progress.Set("timer", fmtTimer(i))
+
+		if interrupt {
+			return
+		}
 	}
 
-	s.workSound.Stop()
-	s.progress.Finish()
 	s.finishSound.Play()
+	//return FULL_POMODORO
 }
 
 func (p *Pomodoro) Start() {
