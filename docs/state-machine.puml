@@ -2,12 +2,17 @@
 (*) -down-> "Init state"
 -down-> Working state
 
+if "work interrupted" then
+  -down-> Interrupted state
+  -up-> Working state
+endif
+
 if "how many \nwork markers" then
   -right->[< 4] "Short rest state"
+  -up-> Wait for user prompt
   -up-> Working state
 else
   -down->[>= 4] "Long rest state"
   -up->[Restart process] "Init state"
 endif
-
 @enduml
