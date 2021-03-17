@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/commands"
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/slack"
+	"github.com/spf13/viper"
 	"os"
 	"os/signal"
 )
@@ -14,7 +15,9 @@ func main() {
 		sigchan := make(chan os.Signal, 1)
 		signal.Notify(sigchan, os.Interrupt)
 		<-sigchan
-		slack.EndDnd()
+		if viper.GetBool("ENABLE_SLACK_DND") {
+			slack.EndDnd()
+		}
 		os.Exit(0)
 	}()
 
