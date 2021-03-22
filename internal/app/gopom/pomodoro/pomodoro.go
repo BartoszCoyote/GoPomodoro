@@ -32,41 +32,42 @@ const (
 )
 
 type PomodoroSettings struct {
-	TaskName          string
-	WorkDuration      int
-	RestDuration      int
-	LongRestDuration  int
-	Cycles            int
-	WorkSoundVolume   float64
-	FinishSoundVolume float64
+	TaskName                string
+	WorkDurationMinutes     int
+	RestDurationMinutes     int
+	LongRestDurationMinutes int
+	Cycles                  int
+	WorkSoundVolume         float64
+	FinishSoundVolume       float64
 }
 
 type Pomodoro struct {
-	taskName          string
-	workDuration      int
-	restDuration      int
-	longRestDuration  int
-	cycles            int
-	maxCycles         int
-	workSoundVolume   float64
-	finishSoundVolume float64
-	stateMachine      *fsm.FSM
+	taskName                string
+	workDurationMinutes     int
+	restDurationMinutes     int
+	longRestDurationMinutes int
+	cycles                  int
+	maxCycles               int
+	workSoundVolume         float64
+	finishSoundVolume       float64
+	stateMachine            *fsm.FSM
 }
 
 type Subtask struct {
-	duration    int
 	name        string
 	workSound   *sound.Player
 	finishSound *sound.Player
 	progress    *pb.ProgressBar
 }
 
+var StdinChan = make(chan rune)
+
 func NewPomodoro(pomodoroSettings *PomodoroSettings) *Pomodoro {
 	return &Pomodoro{
 		pomodoroSettings.TaskName,
-		pomodoroSettings.WorkDuration,
-		pomodoroSettings.RestDuration,
-		pomodoroSettings.LongRestDuration,
+		pomodoroSettings.WorkDurationMinutes,
+		pomodoroSettings.RestDurationMinutes,
+		pomodoroSettings.LongRestDurationMinutes,
 		0,
 		pomodoroSettings.Cycles,
 		pomodoroSettings.WorkSoundVolume,
@@ -75,17 +76,17 @@ func NewPomodoro(pomodoroSettings *PomodoroSettings) *Pomodoro {
 	}
 }
 
-func newSubtask(name string, duration int, workSound string, workSoundVolume float64, finishSound string, finishSoundVolume float64) *Subtask {
+func newSubtask(name string, durationInSeconds int, workSound string, workSoundVolume float64, finishSound string, finishSoundVolume float64) *Subtask {
 	barTemplate := `{{ string . "task" | green }} {{ bar . "▇" "▇" (cycle . "▂" "▃" "▅" "▆" "▅" "▃" "▂" ) "_" "▇"}} {{string . "timer" | green}}`
+	totalSubtaskTime := int64(durationInSeconds) * time.Second.Milliseconds()
 	return &Subtask{
-		duration,
 		name,
 		sound.NewPlayer(workSound, workSoundVolume),
 		sound.NewPlayer(finishSound, finishSoundVolume),
 		pb.ProgressBarTemplate(barTemplate).
-			Start(duration).
+			Start64(totalSubtaskTime).
 			Set("task", name).
-			Set("timer", fmtTimer(0)),
+			Set("timer", fmtTimer(0, totalSubtaskTime)),
 	}
 }
 
@@ -95,35 +96,21 @@ func (s *Subtask) work() bool {
 	// stop the work sound and progress regardless of the outcome of the task - finished, partially finished
 	defer s.workSound.Stop()
 	defer s.progress.Finish()
+	defer s.finishSound.Play()
 
-	interrupt := false
-
-	go func(interrupt *bool) {
-		// the read will block this goroutine waiting for I/O
-		reader := bufio.NewReader(os.Stdin)
-		_, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Println("error error")
-		}
-
-		// We can get away with a pointer here as we dont need full syncrhonization
-		// Work loop can detect interrupt after 1-2-3 seconds it is not an issue
-		// We could improve it by changing work for loop samplging from 1 per second to something faster
-		*interrupt = true
-	}(&interrupt)
-
-	for i := 0; i < s.duration; i++ {
-		s.progress.Increment()
-		time.Sleep(1 * time.Second)
-		s.progress.Set("timer", fmtTimer(i))
-
-		if interrupt {
+	for {
+		select {
+		case <-StdinChan:
 			return false
+		case <-time.After(1000 * time.Millisecond):
+			currentDuration := time.Now().Sub(s.progress.StartTime()).Milliseconds()
+			s.progress.SetCurrent(currentDuration)
+			if s.progress.Total() < currentDuration {
+				return true
+			}
+			s.progress.Set("timer", fmtTimer(currentDuration, s.progress.Total()))
 		}
 	}
-
-	s.finishSound.Play()
-	return true
 }
 
 func (p *Pomodoro) Start() {
@@ -179,11 +166,11 @@ func (p *Pomodoro) init() string {
 func (p *Pomodoro) work() string {
 	slackDndEnabled := viper.GetBool("ENABLE_SLACK_DND")
 	if slackDndEnabled {
-		slack.SetDnd(p.workDuration)
+		slack.SetDnd(p.workDurationMinutes)
 	}
 
 	workName := "Working on " + p.taskName
-	subtask := newSubtask(workName, p.workDuration, "/timer.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume)
+	subtask := newSubtask(workName, p.workDurationMinutes*60, "/timer.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume)
 	workFinished := subtask.work()
 
 	if slackDndEnabled {
@@ -208,14 +195,14 @@ func (p *Pomodoro) evaluateWorkCount() string {
 }
 
 func (p *Pomodoro) rest() string {
-	subtask := newSubtask("Resting...", p.restDuration, "/placeholder.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume)
+	subtask := newSubtask("Resting...", p.restDurationMinutes*60, "/placeholder.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume)
 	subtask.work()
 
 	return REST_FINISHED_EVENT
 }
 
 func (p *Pomodoro) longRest() string {
-	subtask := newSubtask("Long rest...", p.longRestDuration, "/placeholder.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume)
+	subtask := newSubtask("Long rest...", p.longRestDurationMinutes*60, "/placeholder.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume)
 	subtask.work()
 	p.cycles = 0
 
@@ -235,8 +222,10 @@ func (p *Pomodoro) waitForUser() string {
 	return WORK_RESUMED_EVENT
 }
 
-func fmtTimer(t int) string {
-	m := t / 60
-	s := t - (m * 60)
-	return fmt.Sprintf("%02d:%02d", m, s)
+func fmtTimer(currentMs int64, totalMs int64) string {
+	currentMin := currentMs / 1000 / 60
+	currentSec := currentMs/1000 - (currentMin * 60)
+	totalMin := totalMs / 1000 / 60
+	totalSec := totalMs/1000 - (totalMs * 60)
+	return fmt.Sprintf("%02d:%02d / %02d:%02d", currentMin, currentSec, totalMin, totalSec)
 }
