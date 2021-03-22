@@ -226,6 +226,6 @@ func fmtTimer(currentMs int64, totalMs int64) string {
 	currentMin := currentMs / 1000 / 60
 	currentSec := currentMs/1000 - (currentMin * 60)
 	totalMin := totalMs / 1000 / 60
-	totalSec := totalMs/1000 - (totalMs * 60)
+	totalSec := totalMs/1000 - (totalMin * 60)
 	return fmt.Sprintf("%02d:%02d / %02d:%02d", currentMin, currentSec, totalMin, totalSec)
 }
