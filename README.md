@@ -1,7 +1,8 @@
 ![](https://travis-ci.org/BartoszCoyote/GoPomodoro.svg?branch=master) - [last build](https://travis-ci.org/BartoszCoyote/GoPomodoro)
 
-
 # GoPomodoro
+
+![](docs/go-pomodoro-running-22-03-2021.png)
 
 Proposed stack:
 - https://github.com/spf13/cobra
