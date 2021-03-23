@@ -1,11 +1,9 @@
 package pomodoro
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/slack"
 	"github.com/spf13/viper"
-	"os"
 	"time"
 
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/sound"
@@ -211,13 +209,10 @@ func (p *Pomodoro) longRest() string {
 
 func (p *Pomodoro) waitForUser() string {
 	waitForUser := viper.GetBool("ENABLE_WORK_CONTINUE")
-	if !waitForUser {
-		return WORK_RESUMED_EVENT
+	if waitForUser {
+		fmt.Println("Press Enter to continue...")
+		<-StdinChan
 	}
-
-	fmt.Println("Press any button to continue...")
-	inputScanner := bufio.NewScanner(os.Stdin)
-	inputScanner.Scan()
 
 	return WORK_RESUMED_EVENT
 }
