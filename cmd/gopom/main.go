@@ -26,7 +26,7 @@ func main() {
 			reader := bufio.NewReader(os.Stdin)
 			r, _, err := reader.ReadRune()
 			if err != nil {
-				fmt.Println("error error ", err)
+				fmt.Println("error when reading rune from the stdin reader", err)
 			}
 			input <- r
 		}
