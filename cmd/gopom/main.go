@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/commands"
+	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/pomodoro"
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/slack"
 	"github.com/spf13/viper"
 	"os"
@@ -20,6 +23,17 @@ func main() {
 		}
 		os.Exit(0)
 	}()
+
+	go func(input chan rune) {
+		for {
+			reader := bufio.NewReader(os.Stdin)
+			r, _, err := reader.ReadRune()
+			if err != nil {
+				fmt.Println("error when reading rune from the stdin reader", err)
+			}
+			input <- r
+		}
+	}(pomodoro.StdinChan)
 
 	commands.Execute()
 }

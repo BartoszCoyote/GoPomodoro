@@ -50,19 +50,19 @@ var startCmd = &cobra.Command{
 		internalFinishVolume := float64(finishVolume)/10 - 8
 
 		taskName := getTaskName(args)
-		workDuration := viper.GetInt("WORK_DURATION_MINUTES")
-		restDuration := viper.GetInt("REST_DURATION_MINUTES")
-		longRestDuration := viper.GetInt("LONG_REST_DURATION_MINUTES")
+		workDurationMinutes := viper.GetInt("WORK_DURATION_MINUTES")
+		restDurationMinutes := viper.GetInt("REST_DURATION_MINUTES")
+		longRestDurationMinutes := viper.GetInt("LONG_REST_DURATION_MINUTES")
 		maxCycles := viper.GetInt("MAX_CYCLES")
 
 		pomodoro.NewPomodoro(&pomodoro.PomodoroSettings{
-			TaskName:          taskName,
-			WorkDuration:      workDuration * 60,
-			RestDuration:      restDuration * 60,
-			LongRestDuration:  longRestDuration * 60,
-			Cycles:            maxCycles,
-			WorkSoundVolume:   internalWorkVolume,
-			FinishSoundVolume: internalFinishVolume,
+			TaskName:                taskName,
+			WorkDurationMinutes:     workDurationMinutes,
+			RestDurationMinutes:     restDurationMinutes,
+			LongRestDurationMinutes: longRestDurationMinutes,
+			Cycles:                  maxCycles,
+			WorkSoundVolume:         internalWorkVolume,
+			FinishSoundVolume:       internalFinishVolume,
 		}).Start()
 	},
 }
