@@ -20,15 +20,12 @@ jobs:
 
     - name: install deps
       run: sudo apt-get install -y libasound2-dev golint
-        
-    - name: Lint
-      run: make lint
-
-    - name: Test
-      run: make test
 
     - name: Build soundpack
       run: make create-sound-pack
+      
+    - name: Test
+      run: make test
       
     - name: Build
       run: make build
