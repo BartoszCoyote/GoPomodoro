@@ -19,7 +19,7 @@ jobs:
         go-version: 1.15
 
     - name: install deps
-      run: apt-get install -y libasound2-dev golint
+      run: sudo apt-get install -y libasound2-dev golint
         
     - name: Lint
       run: make lint
