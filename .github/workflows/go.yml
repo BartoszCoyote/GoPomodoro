@@ -27,6 +27,8 @@ jobs:
     - name: Test
       run: make test
 
+    - name: Build soundpack
+      run: make create-sound-pack
+      
     - name: Build
-    - run: make create-sound-pack
-    - run: make build
+      run: make build
