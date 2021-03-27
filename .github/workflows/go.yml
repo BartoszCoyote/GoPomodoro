@@ -46,6 +46,10 @@ jobs:
 
       - name: Build soundpack
         run: make create-sound-pack
+
+      - name: Get tag name
+        id: get_tag_name
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
           
       -
         name: Run GoReleaser
@@ -55,6 +59,6 @@ jobs:
           args: release --rm-dist --skip-validate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ github.event.release.tag_name }}
+          VERSION: ${{ steps.get_tag_name.outputs.VERSION }}
           GO111MODULE: on
 
