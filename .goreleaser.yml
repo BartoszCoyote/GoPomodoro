@@ -7,6 +7,8 @@ builds:
       - linux
     goarch:
       - amd64
+    ldflags:
+      - -X 'github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/commands.Version={{.Env.VERSION}}'
     binary: gopom
     main: ./cmd/gopom/main.go
 checksum:
