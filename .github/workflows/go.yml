@@ -1,14 +1,13 @@
-name: Go
+name: Build-Release
 
 on:
   push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+    tags:
+      - '*'
 
 jobs:
 
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -26,6 +25,36 @@ jobs:
       
     - name: Test
       run: make test
-      
-    - name: Build
-      run: make build
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      -
+        name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+          
+      - name: install deps
+        run: sudo apt-get install -y libasound2-dev golint && go get github.com/rakyll/statik
+
+      - name: Build soundpack
+        run: make create-sound-pack
+          
+      -
+        name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: release --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ github.event.release.tag_name }}
+          GO111MODULE: on
+

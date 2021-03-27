@@ -1,0 +1,23 @@
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./cmd/gopom
+builds:
+  - goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - -X 'github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/commands.Version={{.Env.VERSION}}'
+    binary: gopom
+    main: ./cmd/gopom/main.go
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
