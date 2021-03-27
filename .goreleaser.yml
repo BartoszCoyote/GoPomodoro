@@ -3,19 +3,12 @@ before:
     - go mod tidy
     - go generate ./cmd/gopom
 builds:
-  - env:
-      - CGO_ENABLED=0
-      - GO111MODULE=on
-    goos:
+  - goos:
       - linux
     goarch:
       - amd64
     binary: gopom
     main: ./cmd/gopom/main.go
-archives:
-  - replacements:
-      linux: Linux
-      amd64: x86_64
 checksum:
   name_template: 'checksums.txt'
 snapshot:
