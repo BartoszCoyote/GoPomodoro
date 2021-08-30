@@ -40,6 +40,7 @@ func callSlack(urlS string) error {
 		return fmt.Errorf("error when calling slack endpoint - %s", err)
 	}
 
+	//TODO: if auth is invalid slack is still sending 200 so this wont help at all we need to parse json body which looks like this - {"ok":false,"error":"invalid_auth"}
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {

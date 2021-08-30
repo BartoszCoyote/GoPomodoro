@@ -27,3 +27,19 @@ KEY1=VALUE1
 - SLACK_TOKEN - Slack token used in DND functionality (this has to be user oauth token starting with xoxp)
 - ENABLE_SLACK_DND (true|false) - enable DND functionality
 - ENABLE_WORK_CONTINUE (true|false) - enable waiting for user prompt when moving on to new work session
+ 
+### ENABLE_ECHO_PROGRESS_TO_FILES (true|false)
+This is a special command that if true will start outputing pomodoro stats and progress to files.
+
+Time in format: `00:01 / 25:00` to file
+```
+/tmp/pomodoro-time
+```
+Stats in format:  `{"done":8,"failed":7,"rests":7}` to file
+```
+/tmp/pomodoro-stats
+```
+
+You can then read these form various applications.
+One use-case - polybar to output timer and stats on polybar.
+

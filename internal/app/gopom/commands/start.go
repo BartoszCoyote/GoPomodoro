@@ -53,6 +53,7 @@ var startCmd = &cobra.Command{
 		workDurationMinutes := viper.GetInt("WORK_DURATION_MINUTES")
 		restDurationMinutes := viper.GetInt("REST_DURATION_MINUTES")
 		longRestDurationMinutes := viper.GetInt("LONG_REST_DURATION_MINUTES")
+		echoTimerStatsToFile := viper.GetBool("ENABLE_ECHO_PROGRESS_TO_FILES")
 		maxCycles := viper.GetInt("MAX_CYCLES")
 
 		pomodoro.NewPomodoro(&pomodoro.PomodoroSettings{
@@ -63,6 +64,8 @@ var startCmd = &cobra.Command{
 			Cycles:                  maxCycles,
 			WorkSoundVolume:         internalWorkVolume,
 			FinishSoundVolume:       internalFinishVolume,
+			StatsToFileEnabled:      echoTimerStatsToFile,
+			TimerToFileEnabled:      echoTimerStatsToFile,
 		}).Start()
 	},
 }
