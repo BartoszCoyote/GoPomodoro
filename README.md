@@ -17,7 +17,13 @@ If `make` complains about this - install with:
 `sudo apt-get install libasound2-dev`
 
 # Configuration
+By, default config file is loaded from `.GoPomodoro` in your home directory
+You should format your file like this:
+```
+KEY=VALUE
+KEY1=VALUE1
+```
 
-- SLACK_TOKEN - Slack token used in DND functionality
+- SLACK_TOKEN - Slack token used in DND functionality (this has to be user oauth token starting with xoxp)
 - ENABLE_SLACK_DND (true|false) - enable DND functionality
 - ENABLE_WORK_CONTINUE (true|false) - enable waiting for user prompt when moving on to new work session
