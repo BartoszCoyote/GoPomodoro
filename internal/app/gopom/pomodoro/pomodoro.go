@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/slack"
 	"github.com/spf13/viper"
+	"log"
+	"os"
 	"time"
 
 	"github.com/BartoszCoyote/GoPomodoro/internal/app/gopom/sound"
@@ -37,6 +39,8 @@ type PomodoroSettings struct {
 	Cycles                  int
 	WorkSoundVolume         float64
 	FinishSoundVolume       float64
+	TimerToFileEnabled      bool
+	StatsToFileEnabled      bool
 }
 
 type Pomodoro struct {
@@ -49,18 +53,25 @@ type Pomodoro struct {
 	workSoundVolume         float64
 	finishSoundVolume       float64
 	stateMachine            *fsm.FSM
+	enableFileTimer         bool
+	stats                   *PomodoroStats
 }
 
 type Subtask struct {
-	name        string
-	workSound   *sound.Player
-	finishSound *sound.Player
-	progress    *pb.ProgressBar
+	name            string
+	workSound       *sound.Player
+	finishSound     *sound.Player
+	progress        *pb.ProgressBar
+	echoTimerToFile bool
 }
 
 var StdinChan = make(chan rune)
 
 func NewPomodoro(pomodoroSettings *PomodoroSettings) *Pomodoro {
+
+	stats := &PomodoroStats{}
+	stats.Enabled = pomodoroSettings.StatsToFileEnabled
+
 	return &Pomodoro{
 		pomodoroSettings.TaskName,
 		pomodoroSettings.WorkDurationMinutes,
@@ -71,10 +82,12 @@ func NewPomodoro(pomodoroSettings *PomodoroSettings) *Pomodoro {
 		pomodoroSettings.WorkSoundVolume,
 		pomodoroSettings.FinishSoundVolume,
 		initStateMachine(),
+		pomodoroSettings.TimerToFileEnabled,
+		stats,
 	}
 }
 
-func newSubtask(name string, durationInSeconds int, workSound string, workSoundVolume float64, finishSound string, finishSoundVolume float64) *Subtask {
+func newSubtask(name string, durationInSeconds int, workSound string, workSoundVolume float64, finishSound string, finishSoundVolume float64, fileTimer bool) *Subtask {
 	barTemplate := `{{ string . "task" | green }} {{ bar . "▇" "▇" (cycle . "▂" "▃" "▅" "▆" "▅" "▃" "▂" ) "_" "▇"}} {{string . "timer" | green}}`
 	totalSubtaskTime := int64(durationInSeconds) * time.Second.Milliseconds()
 	return &Subtask{
@@ -85,6 +98,7 @@ func newSubtask(name string, durationInSeconds int, workSound string, workSoundV
 			Start64(totalSubtaskTime).
 			Set("task", name).
 			Set("timer", fmtTimer(0, totalSubtaskTime)),
+		fileTimer,
 	}
 }
 
@@ -96,6 +110,18 @@ func (s *Subtask) work() bool {
 	defer s.progress.Finish()
 	defer s.finishSound.Play()
 
+	var f *os.File
+	var err error
+	if s.echoTimerToFile {
+		f, err = os.OpenFile("/tmp/pomodoro-timer", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	if f != nil {
+		defer f.Close()
+	}
+
 	for {
 		select {
 		case <-StdinChan:
@@ -103,10 +129,15 @@ func (s *Subtask) work() bool {
 		case <-time.After(1000 * time.Millisecond):
 			currentDuration := time.Now().Sub(s.progress.StartTime()).Milliseconds()
 			s.progress.SetCurrent(currentDuration)
+
 			if s.progress.Total() < currentDuration {
 				return true
 			}
 			s.progress.Set("timer", fmtTimer(currentDuration, s.progress.Total()))
+
+			if f != nil {
+				truncateWriteToFile(f, fmtTimer(currentDuration, s.progress.Total()))
+			}
 		}
 	}
 }
@@ -155,7 +186,7 @@ func initStateMachine() *fsm.FSM {
 
 func (p *Pomodoro) init() string {
 	taskStartupName := "Starting work on " + p.taskName
-	subtask := newSubtask(taskStartupName, 2, "/beep.mp3", p.workSoundVolume, "/placeholder.mp3", p.finishSoundVolume)
+	subtask := newSubtask(taskStartupName, 2, "/beep.mp3", p.workSoundVolume, "/placeholder.mp3", p.finishSoundVolume, p.enableFileTimer)
 	subtask.work()
 
 	return WORK_STARTED_EVENT
@@ -168,7 +199,7 @@ func (p *Pomodoro) work() string {
 	}
 
 	workName := "Working on " + p.taskName
-	subtask := newSubtask(workName, p.workDurationMinutes*60, "/timer.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume)
+	subtask := newSubtask(workName, p.workDurationMinutes*60, "/timer.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume, p.enableFileTimer)
 	workFinished := subtask.work()
 
 	if slackDndEnabled {
@@ -177,9 +208,11 @@ func (p *Pomodoro) work() string {
 
 	if workFinished {
 		p.cycles++
+		p.stats.Done()
 		return WORK_FINISHED_EVENT
 	} else {
 		fmt.Println("Pomodoro was interrupted.")
+		p.stats.Interrupted()
 		return WORK_INTERRUPTED_EVENT
 	}
 }
@@ -193,17 +226,19 @@ func (p *Pomodoro) evaluateWorkCount() string {
 }
 
 func (p *Pomodoro) rest() string {
-	subtask := newSubtask("Resting...", p.restDurationMinutes*60, "/placeholder.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume)
+	subtask := newSubtask("Resting...", p.restDurationMinutes*60, "/placeholder.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume, p.enableFileTimer)
 	subtask.work()
 
+	p.stats.Rest()
 	return REST_FINISHED_EVENT
 }
 
 func (p *Pomodoro) longRest() string {
-	subtask := newSubtask("Long rest...", p.longRestDurationMinutes*60, "/placeholder.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume)
+	subtask := newSubtask("Long rest...", p.longRestDurationMinutes*60, "/placeholder.mp3", p.workSoundVolume, "/finish.mp3", p.finishSoundVolume, p.enableFileTimer)
 	subtask.work()
 	p.cycles = 0
 
+	p.stats.Rest()
 	return WORK_RESTARTED_EVENT
 }
 
