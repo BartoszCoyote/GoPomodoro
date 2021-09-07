@@ -11,9 +11,9 @@ import (
 
 type PomodoroStats struct {
 	Enabled          bool
-	DoneValue        int `json:"done"`
-	InterruptedValue int `json:"failed"`
-	RestsValue       int `json:"rests"`
+	Completions      int `json:"completions"`
+	Interruptions    int `json:"interruptions"`
+	Rests            int `json:"rests"`
 }
 
 func (ps *PomodoroStats) read() {
@@ -54,19 +54,19 @@ func (ps *PomodoroStats) save() {
 
 func (ps *PomodoroStats) Done() {
 	ps.read()
-	ps.DoneValue += 1
+	ps.Completions += 1
 	ps.save()
 }
 
 func (ps *PomodoroStats) Interrupted() {
 	ps.read()
-	ps.InterruptedValue += 1
+	ps.Interruptions += 1
 	ps.save()
 }
 
 func (ps *PomodoroStats) Rest() {
 	ps.read()
-	ps.RestsValue += 1
+	ps.Rests += 1
 	ps.save()
 }
 
