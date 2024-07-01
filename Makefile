@@ -14,7 +14,7 @@ lint:
 	GO111MODULE=on golint ./...
 
 deps:
-	go get github.com/rakyll/statik
+	go install github.com/rakyll/statik@latest
 
 create-sound-pack:
 	statik -f -src ./default-sound-pack -p soundpack -dest ./internal/app/gopom/sound
