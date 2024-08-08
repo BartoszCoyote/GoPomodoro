@@ -27,6 +27,10 @@ KEY1=VALUE1
 - SLACK_TOKEN - Slack token used in DND functionality (this has to be user oauth token starting with xoxp)
 - ENABLE_SLACK_DND (true|false) - enable DND functionality
 - ENABLE_WORK_CONTINUE (true|false) - enable waiting for user prompt when moving on to new work session
+- WORK_DURATION_MINUTES - time for each work session  (default: 25)
+- REST_DURATION_MINUTES - time for short break session (default: 5)
+- MAX_CYCLES - work sessions + breaks before long rest is activated (default: 4)
+- LONG_REST_DURATION_MINUTES - time for long rest session (default: 20)
  
 ### ENABLE_ECHO_PROGRESS_TO_FILES (true|false)
 This is a special command that if true will start outputing pomodoro stats and progress to files.
