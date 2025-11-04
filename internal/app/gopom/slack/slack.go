@@ -1,6 +1,7 @@
 package slack
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/viper"
 	"io/ioutil"
@@ -10,6 +11,11 @@ import (
 	"strconv"
 	"strings"
 )
+
+type slackResponse struct {
+	Ok    bool   `json:"ok"`
+	Error string `json:"error"`
+}
 
 func callSlack(urlS string) error {
 	form := url.Values{}
@@ -40,16 +46,25 @@ func callSlack(urlS string) error {
 		return fmt.Errorf("error when calling slack endpoint - %s", err)
 	}
 
-	//TODO: if auth is invalid slack is still sending 200 so this wont help at all we need to parse json body which looks like this - {"ok":false,"error":"invalid_auth"}
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("error when reading body - %s", err)
-		}
-		return fmt.Errorf("slack responded with error message - %s", bodyBytes)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error when reading response body - %s", err)
 	}
 
-	// return empty error
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("slack responded with error status code %d - %s", resp.StatusCode, bodyBytes)
+	}
+
+	// Parse JSON response to check for API errors (Slack returns 200 even on auth failures)
+	var slackResp slackResponse
+	if err := json.Unmarshal(bodyBytes, &slackResp); err != nil {
+		return fmt.Errorf("error when parsing slack response - %s", err)
+	}
+
+	if !slackResp.Ok {
+		return fmt.Errorf("slack API error: %s", slackResp.Error)
+	}
+
 	return nil
 }
 
